@@ -1,10 +1,32 @@
 // src/api/client.ts
-const API_BASE = "http://localhost:3000/api/v1";
+const API_BASE = "http://localhost:3005/api/v1";
 
 let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null) {
   accessToken = token;
+}
+
+// Export refreshToken so it can be used elsewhere
+export async function refreshToken(): Promise<boolean> {
+  try {
+    const res = await fetch(API_BASE + "/auth/refresh", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!res.ok) return false;
+
+    const data = await res.json();
+    if (data.accessToken) {
+      setAccessToken(data.accessToken);
+      return true;
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
 }
 
 async function request(path: string, options: RequestInit = {}, retry = true) {
@@ -50,24 +72,15 @@ export function apiPost(path: string, body?: any) {
   });
 }
 
-// hit /auth/refresh (your backend) to get a new accessToken
-async function refreshToken(): Promise<boolean> {
-  try {
-    const res = await fetch(API_BASE + "/auth/refresh", {
-      method: "POST",
-      credentials: "include",
-    });
+export function apiPut(path: string, body?: any) {
+  return request(path, {
+    method: "PUT",
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
 
-    if (!res.ok) return false;
-
-    const data = await res.json();
-    if (data.accessToken) {
-      setAccessToken(data.accessToken);
-      return true;
-    }
-
-    return false;
-  } catch {
-    return false;
-  }
+export function apiDelete(path: string) {
+  return request(path, {
+    method: "DELETE",
+  });
 }

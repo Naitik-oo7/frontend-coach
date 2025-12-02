@@ -1,13 +1,13 @@
-// src/pages/LoginPage.tsx
+// src/pages/SignUpPage.tsx
 import React, { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
-const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+const SignUpPage: React.FC = () => {
+  const { signup } = useAuth();
   const navigate = useNavigate();
 
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -18,10 +18,10 @@ const LoginPage: React.FC = () => {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
+      await signup(name, email, password);
       navigate("/chat");
     } catch (err: any) {
-      setError("Login failed. Please check your credentials.");
+      setError("Signup failed: " + (err.message || "Please try again"));
     } finally {
       setLoading(false);
     }
@@ -39,17 +39,17 @@ const LoginPage: React.FC = () => {
     >
       <div
         className="card"
-        style={{ width: "100%", maxWidth: "400px", textAlign: "center" }}
+        style={{ width: "100%", maxWidth: "450px", textAlign: "center" }}
       >
         <div style={{ marginBottom: "var(--spacing-xl)" }}>
           <h1
             className="gradient-text"
             style={{ fontSize: "2.5rem", marginBottom: "var(--spacing-sm)" }}
           >
-            Welcome Back!
+            Join the Chat!
           </h1>
           <p style={{ color: "var(--gray)", fontSize: "1.1rem" }}>
-            Sign in to continue your conversations
+            Create an account to start connecting
           </p>
         </div>
 
@@ -68,6 +68,16 @@ const LoginPage: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: "var(--spacing-lg)" }}>
+            <input
+              className="input-field"
+              placeholder="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+
           <div style={{ marginBottom: "var(--spacing-lg)" }}>
             <input
               className="input-field"
@@ -108,22 +118,22 @@ const LoginPage: React.FC = () => {
                   justifyContent: "center",
                 }}
               >
-                <span className="animate-pulse">Logging in...</span>
+                <span className="animate-pulse">Signing up...</span>
               </span>
             ) : (
-              "Login"
+              "Sign Up"
             )}
           </button>
         </form>
 
         <div style={{ marginTop: "var(--spacing-xl)", textAlign: "center" }}>
           <p>
-            Don't have an account?{" "}
+            Already have an account?{" "}
             <Link
-              to="/signup"
+              to="/login"
               style={{ color: "var(--primary)", fontWeight: 600 }}
             >
-              Sign up
+              Log in
             </Link>
           </p>
         </div>
@@ -132,4 +142,4 @@ const LoginPage: React.FC = () => {
   );
 };
 
-export default LoginPage;
+export default SignUpPage;

@@ -1,6 +1,7 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { apiPost, setAccessToken, refreshToken } from "../api/client";
+import AuthService from "../services/authService";
+import { setAccessToken } from "../api/client";
 
 interface User {
   id: string;
@@ -15,7 +16,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  loading: boolean; // Add loading state
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -25,7 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
 
   // Initialize auth state from localStorage on app load
   useEffect(() => {
@@ -41,8 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setAccessToken(storedToken);
 
           // Validate token by attempting to refresh it
-          // This will update the token if it's still valid or get a new one if it's expired
-          const refreshed = await refreshToken();
+          const refreshed = await AuthService.refreshToken();
           if (!refreshed) {
             // Refresh failed, clear auth state
             setUser(null);
@@ -51,9 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             localStorage.removeItem("user");
             localStorage.removeItem("accessToken");
           }
-          // Note: If refresh succeeded, the accessToken is already updated in the api client
-          // We don't need to update it here since we're using the same reference
-        } catch (error) {
+        } catch {
           // Any error, clear auth state
           setUser(null);
           setToken(null);
@@ -69,37 +67,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = async (email: string, password: string) => {
-    const data = await apiPost("/auth/login", { email, password });
+    const data = await AuthService.login({ email, password });
 
     setUser(data.user);
     setToken(data.accessToken);
     setAccessToken(data.accessToken);
-    // Persist to localStorage
     localStorage.setItem("user", JSON.stringify(data.user));
     localStorage.setItem("accessToken", data.accessToken);
   };
 
   const signup = async (name: string, email: string, password: string) => {
-    const data = await apiPost("/auth/register", { name, email, password });
+    const data = await AuthService.register({ name, email, password });
 
     setUser(data.user);
     setToken(data.accessToken);
     setAccessToken(data.accessToken);
-    // Persist to localStorage
     localStorage.setItem("user", JSON.stringify(data.user));
     localStorage.setItem("accessToken", data.accessToken);
   };
 
   const logout = async () => {
-    try {
-      await apiPost("/auth/logout");
-    } catch {
-      // ignore
-    }
+    await AuthService.logout();
     setUser(null);
     setToken(null);
     setAccessToken(null);
-    // Clear from localStorage
     localStorage.removeItem("user");
     localStorage.removeItem("accessToken");
   };
@@ -113,6 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuthContext() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuthContext must be used inside AuthProvider");

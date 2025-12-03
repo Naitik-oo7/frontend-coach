@@ -130,7 +130,7 @@ const ChatPage: React.FC = () => {
 
   const loadConversations = async () => {
     try {
-      const res = await apiGet("/chat/conversations");
+      const res = await apiGet("/api/v1/chat/conversations");
       console.log("Conversations loaded:", res);
       setConversations(res.data);
     } catch (error) {
@@ -140,7 +140,7 @@ const ChatPage: React.FC = () => {
 
   const loadUsers = async () => {
     try {
-      const res = await apiGet("/users");
+      const res = await apiGet("/api/v1/users");
       console.log("Users loaded:", res);
       setUsers(res.data);
     } catch (error) {
@@ -151,7 +151,7 @@ const ChatPage: React.FC = () => {
   const loadMessages = async (conversationId: string) => {
     try {
       const res = await apiGet(
-        `/chat/conversations/${conversationId}/messages`
+        `/api/v1/chat/conversations/${conversationId}/messages`
       );
       console.log(`Messages loaded for conversation ${conversationId}:`, res);
       setMessages(res.data);
@@ -166,7 +166,7 @@ const ChatPage: React.FC = () => {
   const createConversation = async (userId: string) => {
     try {
       console.log("Creating conversation with user ID:", userId);
-      const res = await apiPost("/chat/conversations", { userId });
+      const res = await apiPost("/api/v1/chat/conversations", { userId });
       console.log("Response from create conversation:", res);
 
       // Check if response has the expected structure
@@ -633,3 +633,118 @@ const ChatPage: React.FC = () => {
 };
 
 export default ChatPage;
+
+/*
+ * SOCKET-BASED DATA FETCHING FUNCTIONS (COMMENTED OUT)
+ *
+ * While it's technically possible to fetch chats and conversations via socket events,
+ * this approach is not recommended for the following reasons:
+ *
+ * 1. Violates separation of concerns - REST APIs are designed for request-response patterns
+ *    while sockets are designed for real-time, bidirectional communication
+ *
+ * 2. Increased complexity - Need to implement request-response matching with IDs,
+ *    manual timeout handling, and more complex error handling
+ *
+ * 3. Loss of HTTP benefits - No caching, standardized status codes, or automatic retry mechanisms
+ *
+ * 4. Scalability issues - Keeping socket connections open for data fetching consumes more
+ *    server resources compared to stateless REST APIs
+ *
+ * 5. Poor developer experience - Standard tools won't work, harder to test and debug
+ *
+ * We're using REST APIs for data fetching and sockets only for real-time updates,
+ * which is the industry best practice for chat applications.
+ */
+
+/*
+  // NEW: Function to fetch conversations via socket
+  const fetchConversationsViaSocket = (): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      if (!socketRef.current) {
+        reject(new Error("Socket not connected"));
+        return;
+      }
+
+      const requestId = Math.random().toString(36).substring(2, 15);
+      requestCallbacksRef.current.set(requestId, (response) => {
+        if (response.success) {
+          resolve(response);
+        } else {
+          reject(new Error(response.error || "Failed to fetch conversations"));
+        }
+      });
+
+      socketRef.current.emit("fetchConversations", { requestId });
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        if (requestCallbacksRef.current.has(requestId)) {
+          requestCallbacksRef.current.delete(requestId);
+          reject(new Error("Request timeout"));
+        }
+      }, 10000);
+    });
+  };
+
+  // NEW: Function to fetch messages via socket
+  const fetchMessagesViaSocket = (conversationId: string): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      if (!socketRef.current) {
+        reject(new Error("Socket not connected"));
+        return;
+      }
+
+      const requestId = Math.random().toString(36).substring(2, 15);
+      requestCallbacksRef.current.set(requestId, (response) => {
+        if (response.success) {
+          resolve(response);
+        } else {
+          reject(new Error(response.error || "Failed to fetch messages"));
+        }
+      });
+
+      socketRef.current.emit("fetchMessages", { 
+        requestId, 
+        conversationId 
+      });
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        if (requestCallbacksRef.current.has(requestId)) {
+          requestCallbacksRef.current.delete(requestId);
+          reject(new Error("Request timeout"));
+        }
+      }, 10000);
+    });
+  };
+  */
+
+/*
+  // Modified loadConversations using socket (commented out)
+  const loadConversations = async () => {
+    try {
+      // Use socket instead of REST API
+      const res = await fetchConversationsViaSocket();
+      console.log("Conversations loaded via socket:", res);
+      setConversations(res.data);
+    } catch (error) {
+      console.error("Failed to load conversations:", error);
+    }
+  };
+
+  // Modified loadMessages using socket (commented out)
+  const loadMessages = async (conversationId: string) => {
+    try {
+      // Use socket instead of REST API
+      const res = await fetchMessagesViaSocket(conversationId);
+      console.log(`Messages loaded via socket for conversation ${conversationId}:`, res);
+      setMessages(res.data);
+    } catch (error) {
+      console.error(
+        `Failed to load messages for conversation ${conversationId}:`,
+        error
+      );
+    }
+  };
+  */

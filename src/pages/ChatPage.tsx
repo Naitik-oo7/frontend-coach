@@ -8,6 +8,7 @@ import type { Conversation } from "../components/ConversationList";
 import type { Message } from "../components/MessageList";
 import ConversationList from "../components/ConversationList";
 import MessageList from "../components/MessageList";
+import { useToast } from "../hooks/useToast";
 
 // Define User interface
 interface User {
@@ -16,8 +17,31 @@ interface User {
   email: string;
 }
 
+// Define API response interfaces
+interface ConversationsResponse {
+  data: Conversation[];
+}
+
+interface UsersResponse {
+  data: User[];
+}
+
+interface MessagesResponse {
+  data: Message[];
+}
+
+interface CreateConversationResponse {
+  data?: {
+    conversationId?: string;
+    id?: string;
+  };
+  conversationId?: string;
+  id?: string;
+}
+
 const ChatPage: React.FC = () => {
   const { user, accessToken, logout } = useAuth();
+  const toast = useToast();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -44,7 +68,7 @@ const ChatPage: React.FC = () => {
       console.log("Token expired, logging out...");
       // Token has expired, log the user out
       logout();
-      alert("Your session has expired. Please log in again.");
+      toast.error("Your session has expired. Please log in again.");
     });
 
     socket.on("messageSent", (msg: Message) => {
@@ -113,11 +137,12 @@ const ChatPage: React.FC = () => {
     socket.on("typing", (data: { userId: string }) => {
       // Add user to typing list
       setTypingUsers((prev) => [...new Set([...prev, data.userId])]);
+    });
 
-      // Remove user from typing list after 3 seconds
-      setTimeout(() => {
-        setTypingUsers((prev) => prev.filter((id) => id !== data.userId));
-      }, 3000);
+    // Handle stop typing indicators
+    socket.on("stopTyping", (data: { userId: string }) => {
+      // Remove user from typing list
+      setTypingUsers((prev) => prev.filter((id) => id !== data.userId));
     });
 
     socketRef.current = socket;
@@ -130,27 +155,31 @@ const ChatPage: React.FC = () => {
 
   const loadConversations = async () => {
     try {
-      const res = await apiGet("/api/v1/chat/conversations");
+      const res = await apiGet<ConversationsResponse>(
+        "/api/v1/chat/conversations"
+      );
       console.log("Conversations loaded:", res);
       setConversations(res.data);
     } catch (error) {
       console.error("Failed to load conversations:", error);
+      toast.error("Failed to load conversations");
     }
   };
 
   const loadUsers = async () => {
     try {
-      const res = await apiGet("/api/v1/users");
+      const res = await apiGet<UsersResponse>("/api/v1/users");
       console.log("Users loaded:", res);
       setUsers(res.data);
     } catch (error) {
       console.error("Failed to load users:", error);
+      toast.error("Failed to load users");
     }
   };
 
   const loadMessages = async (conversationId: string) => {
     try {
-      const res = await apiGet(
+      const res = await apiGet<MessagesResponse>(
         `/api/v1/chat/conversations/${conversationId}/messages`
       );
       console.log(`Messages loaded for conversation ${conversationId}:`, res);
@@ -160,13 +189,17 @@ const ChatPage: React.FC = () => {
         `Failed to load messages for conversation ${conversationId}:`,
         error
       );
+      toast.error(`Failed to load messages: ${(error as Error).message}`);
     }
   };
 
   const createConversation = async (userId: string) => {
     try {
       console.log("Creating conversation with user ID:", userId);
-      const res = await apiPost("/api/v1/chat/conversations", { userId });
+      const res = await apiPost<CreateConversationResponse>(
+        "/api/v1/chat/conversations",
+        { userId }
+      );
       console.log("Response from create conversation:", res);
 
       // Check if response has the expected structure
@@ -216,9 +249,11 @@ const ChatPage: React.FC = () => {
       // Hide the form
       setShowNewConversationForm(false);
       setNewConversationUserId("");
+
+      toast.success("Conversation created successfully!");
     } catch (error) {
       console.error("Failed to create conversation:", error);
-      alert("Failed to create conversation: " + (error as Error).message);
+      toast.error("Failed to create conversation: " + (error as Error).message);
     }
   };
 
@@ -276,6 +311,15 @@ const ChatPage: React.FC = () => {
     });
   };
 
+  // Send stop typing indicator
+  const sendStopTypingIndicator = () => {
+    if (!activeId || !socketRef.current || !user) return;
+    socketRef.current.emit("stopTyping", {
+      conversationId: activeId,
+      userId: user.id,
+    });
+  };
+
   const handleCreateConversation = (e: React.FormEvent) => {
     e.preventDefault();
     if (newConversationUserId.trim()) {
@@ -286,113 +330,58 @@ const ChatPage: React.FC = () => {
   if (!user) return null;
 
   return (
-    <div className="container" style={{ padding: "var(--spacing-lg) 0" }}>
-      <div
-        className="card"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          height: "calc(100vh - 2 * var(--spacing-lg))",
-          borderRadius: "var(--radius-lg)",
-          overflow: "hidden",
-        }}
-      >
+    <div className="p-4">
+      <div className="flex flex-col h-[calc(100vh-2rem)] rounded-lg overflow-hidden shadow-md border border-slate-200">
         {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "var(--spacing-md) var(--spacing-lg)",
-            borderBottom: "1px solid #eee",
-            background:
-              "linear-gradient(135deg, var(--primary), var(--secondary))",
-            color: "white",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "var(--spacing-md)",
-            }}
-          >
-            <div
-              className="avatar avatar-lg"
-              style={{
-                backgroundColor: "white",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: "bold",
-                color: "var(--primary)",
-              }}
-            >
+        <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-white text-slate-800">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-medium text-indigo-600">
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.5rem" }}>Chat App</h2>
-              <p style={{ margin: 0, opacity: 0.9, fontSize: "0.9rem" }}>
+              <h2 className="m-0 text-lg font-medium">Chat App</h2>
+              <p className="m-0 text-slate-600 text-sm">
                 Welcome, {user.name}!
               </p>
             </div>
           </div>
-          <button
-            className="btn"
-            onClick={logout}
-            style={{
-              backgroundColor: "rgba(255, 255, 255, 0.2)",
-              color: "white",
-              border: "1px solid rgba(255, 255, 255, 0.3)",
-            }}
-          >
-            Logout
-          </button>
+          <div className="flex gap-2">
+            {/* Show Admin Panel link only for admin users */}
+            {user.role === "admin" && (
+              <a
+                href="/admin/permissions"
+                className="px-3 py-1.5 text-sm bg-slate-100 text-slate-700 rounded-md no-underline flex items-center hover:bg-slate-200 transition"
+              >
+                Admin Panel
+              </a>
+            )}
+            <button
+              className="px-3 py-1.5 text-sm bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition"
+              onClick={logout}
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         {/* Main Content */}
-        <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        <div className="flex flex-1 overflow-hidden">
           {/* Sidebar */}
-          <div
-            style={{
-              width: "30%",
-              borderRight: "1px solid #eee",
-              display: "flex",
-              flexDirection: "column",
-              background: "#f9f9fc",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "var(--spacing-md)",
-                borderBottom: "1px solid #eee",
-              }}
-            >
-              <h3 style={{ margin: 0 }}>Conversations</h3>
-              <div style={{ display: "flex", gap: "var(--spacing-xs)" }}>
+          <div className="w-1/3 border-r border-slate-200 flex flex-col bg-white">
+            <div className="flex justify-between items-center p-4 border-b border-slate-200">
+              <h3 className="m-0 font-medium text-slate-800">Conversations</h3>
+              <div className="flex gap-1">
                 <button
-                  className="btn"
+                  className="px-3 py-1 text-sm min-w-[36px] bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition"
                   onClick={() => setShowHelp(!showHelp)}
-                  style={{
-                    padding: "var(--spacing-xs) var(--spacing-sm)",
-                    fontSize: "0.9rem",
-                    minWidth: "36px",
-                  }}
                 >
                   ?
                 </button>
                 <button
-                  className="btn btn-primary"
+                  className="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition"
                   onClick={() =>
                     setShowNewConversationForm(!showNewConversationForm)
                   }
-                  style={{
-                    padding: "var(--spacing-xs) var(--spacing-sm)",
-                    fontSize: "0.9rem",
-                  }}
                 >
                   +
                 </button>
@@ -400,22 +389,15 @@ const ChatPage: React.FC = () => {
             </div>
 
             {showHelp && (
-              <div
-                className="card"
-                style={{
-                  margin: "var(--spacing-md)",
-                  padding: "var(--spacing-md)",
-                  backgroundColor: "white",
-                }}
-              >
-                <h4 style={{ marginTop: 0, fontSize: "1.1rem" }}>
+              <div className="m-4 p-4 bg-white rounded-md shadow-sm border border-slate-200">
+                <h4 className="mt-0 text-base font-medium text-slate-800">
                   How to use conversations
                 </h4>
-                <ul style={{ paddingLeft: "20px", marginBottom: 0 }}>
-                  <li style={{ marginBottom: "var(--spacing-xs)" }}>
+                <ul className="pl-5 mb-0 text-sm text-slate-600">
+                  <li className="mb-1">
                     To start a new conversation, click the "+" button
                   </li>
-                  <li style={{ marginBottom: "var(--spacing-xs)" }}>
+                  <li className="mb-1">
                     Select a user from the list or enter their User ID
                   </li>
                   <li>Click on a conversation to view and send messages</li>
@@ -424,41 +406,30 @@ const ChatPage: React.FC = () => {
             )}
 
             {showNewConversationForm && (
-              <div
-                className="card"
-                style={{
-                  margin: "var(--spacing-md)",
-                  padding: "var(--spacing-md)",
-                  backgroundColor: "white",
-                }}
-              >
-                <h4 style={{ marginTop: 0, fontSize: "1.1rem" }}>
+              <div className="m-4 p-4 bg-white rounded-md shadow-sm border border-slate-200">
+                <h4 className="mt-0 text-base font-medium text-slate-800">
                   Start New Conversation
                 </h4>
                 <form onSubmit={handleCreateConversation}>
                   <input
-                    className="input-field"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 mb-2"
                     type="text"
                     placeholder="Enter user ID"
                     value={newConversationUserId}
                     onChange={(e) => setNewConversationUserId(e.target.value)}
-                    style={{ marginBottom: "var(--spacing-sm)" }}
                   />
                   <button
-                    className="btn btn-primary"
+                    className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition"
                     type="submit"
-                    style={{ width: "100%" }}
                   >
                     Start Conversation
                   </button>
                 </form>
 
                 {users.length > 0 && (
-                  <div style={{ marginTop: "var(--spacing-md)" }}>
-                    <h5 style={{ marginBottom: "var(--spacing-sm)" }}>
-                      Select from all users:
-                    </h5>
-                    <div style={{ maxHeight: "150px", overflowY: "auto" }}>
+                  <div className="mt-4">
+                    <h5 className="mb-2">Select from all users:</h5>
+                    <div className="max-h-[150px] overflow-y-auto">
                       {users
                         .filter((u) => u.id !== user.id) // Don't show current user
                         .map((u: User) => (
@@ -468,53 +439,15 @@ const ChatPage: React.FC = () => {
                               setNewConversationUserId(u.id);
                               createConversation(u.id);
                             }}
-                            style={{
-                              padding: "var(--spacing-sm)",
-                              cursor: "pointer",
-                              borderBottom: "1px solid #eee",
-                              backgroundColor: "#f9f9f9",
-                              borderRadius: "var(--radius-sm)",
-                              marginBottom: "var(--spacing-xs)",
-                              transition: "all 0.2s ease",
-                            }}
-                            onMouseEnter={(e) =>
-                              (e.currentTarget.style.backgroundColor =
-                                "#e9e9f9")
-                            }
-                            onMouseLeave={(e) =>
-                              (e.currentTarget.style.backgroundColor =
-                                "#f9f9f9")
-                            }
+                            className="p-2 cursor-pointer bg-slate-50 rounded-md mb-1 transition hover:bg-slate-100"
                           >
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "var(--spacing-sm)",
-                              }}
-                            >
-                              <div
-                                className="avatar avatar-sm"
-                                style={{
-                                  backgroundColor: "var(--primary)",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  fontWeight: "bold",
-                                  color: "white",
-                                  fontSize: "0.8rem",
-                                }}
-                              >
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-medium text-white text-xs">
                                 {u.name.charAt(0).toUpperCase()}
                               </div>
                               <div>
-                                <div style={{ fontWeight: 500 }}>{u.name}</div>
-                                <div
-                                  style={{
-                                    fontSize: "0.8rem",
-                                    color: "var(--gray)",
-                                  }}
-                                >
+                                <div className="font-medium">{u.name}</div>
+                                <div className="text-xs text-slate-500">
                                   {u.email}
                                 </div>
                               </div>
@@ -527,16 +460,13 @@ const ChatPage: React.FC = () => {
               </div>
             )}
 
-            <div style={{ flex: 1, overflowY: "auto" }}>
+            <div className="flex-1 overflow-y-auto">
               {conversations.length === 0 ? (
-                <div
-                  style={{ textAlign: "center", padding: "var(--spacing-xl)" }}
-                >
+                <div className="text-center p-8 text-slate-600">
                   <p>No conversations yet. Start a new conversation!</p>
                   <button
-                    className="btn btn-primary"
+                    className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition"
                     onClick={() => setShowNewConversationForm(true)}
-                    style={{ marginTop: "var(--spacing-md)" }}
                   >
                     Start New Conversation
                   </button>
@@ -552,74 +482,46 @@ const ChatPage: React.FC = () => {
           </div>
 
           {/* Chat Area */}
-          <div
-            style={{ width: "70%", display: "flex", flexDirection: "column" }}
-          >
+          <div className="w-2/3 flex flex-col">
             {activeId ? (
               <>
                 <MessageList
                   messages={messages}
                   currentUserId={user.id}
                   typingUsers={typingUsers}
-                  onMessagesViewed={handleMessagesViewed} // Add this prop
+                  onMessagesViewed={handleMessagesViewed}
                 />
                 <MessageInput
                   onSend={handleSend}
                   onTyping={sendTypingIndicator}
+                  onStopTyping={sendStopTypingIndicator}
                 />
               </>
             ) : (
-              <div
-                style={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  textAlign: "center",
-                  padding: "var(--spacing-xl)",
-                  background: "linear-gradient(135deg, #f0f0f5, #e6e6f0)",
-                }}
-              >
-                <div
-                  style={{
-                    width: "80px",
-                    height: "80px",
-                    borderRadius: "var(--radius-full)",
-                    background: "var(--gradient-primary)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginBottom: "var(--spacing-lg)",
-                  }}
-                >
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-white">
+                <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-6 text-slate-400">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="40"
-                    height="40"
+                    width="32"
+                    height="32"
                     viewBox="0 0 24 24"
-                    fill="white"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   >
-                    <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+                    <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z" />
                   </svg>
                 </div>
-                <h2 style={{ marginBottom: "var(--spacing-sm)" }}>
-                  Welcome to Chat App!
-                </h2>
-                <p
-                  style={{
-                    marginBottom: "var(--spacing-lg)",
-                    color: "var(--gray)",
-                    maxWidth: "400px",
-                  }}
-                >
+                <h2 className="mb-2 text-slate-800">Welcome to Chat App!</h2>
+                <p className="mb-6 text-slate-600 max-w-md">
                   Select a conversation from the list or start a new one to
                   begin chatting with your friends.
                 </p>
                 <button
-                  className="btn btn-primary"
+                  className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition"
                   onClick={() => setShowNewConversationForm(true)}
-                  style={{ padding: "var(--spacing-sm) var(--spacing-lg)" }}
                 >
                   Start New Conversation
                 </button>
@@ -633,118 +535,3 @@ const ChatPage: React.FC = () => {
 };
 
 export default ChatPage;
-
-/*
- * SOCKET-BASED DATA FETCHING FUNCTIONS (COMMENTED OUT)
- *
- * While it's technically possible to fetch chats and conversations via socket events,
- * this approach is not recommended for the following reasons:
- *
- * 1. Violates separation of concerns - REST APIs are designed for request-response patterns
- *    while sockets are designed for real-time, bidirectional communication
- *
- * 2. Increased complexity - Need to implement request-response matching with IDs,
- *    manual timeout handling, and more complex error handling
- *
- * 3. Loss of HTTP benefits - No caching, standardized status codes, or automatic retry mechanisms
- *
- * 4. Scalability issues - Keeping socket connections open for data fetching consumes more
- *    server resources compared to stateless REST APIs
- *
- * 5. Poor developer experience - Standard tools won't work, harder to test and debug
- *
- * We're using REST APIs for data fetching and sockets only for real-time updates,
- * which is the industry best practice for chat applications.
- */
-
-/*
-  // NEW: Function to fetch conversations via socket
-  const fetchConversationsViaSocket = (): Promise<any> => {
-    return new Promise((resolve, reject) => {
-      if (!socketRef.current) {
-        reject(new Error("Socket not connected"));
-        return;
-      }
-
-      const requestId = Math.random().toString(36).substring(2, 15);
-      requestCallbacksRef.current.set(requestId, (response) => {
-        if (response.success) {
-          resolve(response);
-        } else {
-          reject(new Error(response.error || "Failed to fetch conversations"));
-        }
-      });
-
-      socketRef.current.emit("fetchConversations", { requestId });
-
-      // Timeout after 10 seconds
-      setTimeout(() => {
-        if (requestCallbacksRef.current.has(requestId)) {
-          requestCallbacksRef.current.delete(requestId);
-          reject(new Error("Request timeout"));
-        }
-      }, 10000);
-    });
-  };
-
-  // NEW: Function to fetch messages via socket
-  const fetchMessagesViaSocket = (conversationId: string): Promise<any> => {
-    return new Promise((resolve, reject) => {
-      if (!socketRef.current) {
-        reject(new Error("Socket not connected"));
-        return;
-      }
-
-      const requestId = Math.random().toString(36).substring(2, 15);
-      requestCallbacksRef.current.set(requestId, (response) => {
-        if (response.success) {
-          resolve(response);
-        } else {
-          reject(new Error(response.error || "Failed to fetch messages"));
-        }
-      });
-
-      socketRef.current.emit("fetchMessages", { 
-        requestId, 
-        conversationId 
-      });
-
-      // Timeout after 10 seconds
-      setTimeout(() => {
-        if (requestCallbacksRef.current.has(requestId)) {
-          requestCallbacksRef.current.delete(requestId);
-          reject(new Error("Request timeout"));
-        }
-      }, 10000);
-    });
-  };
-  */
-
-/*
-  // Modified loadConversations using socket (commented out)
-  const loadConversations = async () => {
-    try {
-      // Use socket instead of REST API
-      const res = await fetchConversationsViaSocket();
-      console.log("Conversations loaded via socket:", res);
-      setConversations(res.data);
-    } catch (error) {
-      console.error("Failed to load conversations:", error);
-    }
-  };
-
-  // Modified loadMessages using socket (commented out)
-  const loadMessages = async (conversationId: string) => {
-    try {
-      // Use socket instead of REST API
-      const res = await fetchMessagesViaSocket(conversationId);
-      console.log(`Messages loaded via socket for conversation ${conversationId}:`, res);
-      setMessages(res.data);
-    } catch (error) {
-      console.error(
-        `Failed to load messages for conversation ${conversationId}:`,
-        error
-      );
-    }
-  };
-  */

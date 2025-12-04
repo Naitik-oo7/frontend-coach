@@ -24,83 +24,28 @@ const ConversationList: React.FC<Props> = ({
   onSelect,
 }) => {
   return (
-    <div style={{ overflowY: "auto" }}>
-      {conversations.map((c, index) => (
+    <div className="overflow-y-auto">
+      {conversations.map((c) => (
         <div
           key={c.conversationId}
           onClick={() => onSelect(c.conversationId)}
-          className={`${c.conversationId === activeId ? "card" : ""} ${
-            index % 2 === 0 ? "animate-slide-in-left" : "animate-slide-in-right"
-          }`}
-          style={{
-            padding: "var(--spacing-md)",
-            cursor: "pointer",
-            background: c.conversationId === activeId ? "white" : "transparent",
-            fontWeight: c.unread ? "bold" : "normal",
-            borderBottom: "1px solid #eee",
-            transition: "all 0.2s ease",
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            gap: "var(--spacing-sm)",
-            animationDelay: `${index * 0.05}s`,
-          }}
-          onMouseEnter={(e) => {
-            if (c.conversationId !== activeId) {
-              e.currentTarget.style.background = "#f0f0f5";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (c.conversationId !== activeId) {
-              e.currentTarget.style.background = "transparent";
-            }
-          }}
+          className={`${
+            c.conversationId === activeId ? "bg-white" : ""
+          } p-4 cursor-pointer font-normal border-b border-slate-200 transition-all duration-200 relative flex items-center gap-3 hover:bg-slate-50`}
         >
-          <div
-            className="avatar"
-            style={{
-              backgroundColor: c.unread ? "var(--secondary)" : "var(--primary)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: "bold",
-              color: "white",
-            }}
-          >
+          <div className="w-10 h-10 rounded-full flex items-center justify-center font-medium text-white bg-indigo-600">
             {c.user.name.charAt(0).toUpperCase()}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "var(--spacing-xs)",
-              }}
-            >
-              <div
-                style={{
-                  fontWeight: c.unread ? 600 : 400,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {c.user.name}
-              </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-center mb-1">
+              <div className="font-medium truncate">{c.user.name}</div>
               {c.unread && (
-                <div className="badge badge-unread animate-bounce">New</div>
+                <div className="px-2 py-1 rounded-full bg-indigo-600 text-white text-xs font-medium">
+                  New
+                </div>
               )}
             </div>
-            <div
-              style={{
-                fontSize: "0.85rem",
-                color: "var(--gray)",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
+            <div className="text-sm text-slate-500 truncate">
               {c.lastMessageAt
                 ? new Date(c.lastMessageAt).toLocaleDateString()
                 : "No messages yet"}

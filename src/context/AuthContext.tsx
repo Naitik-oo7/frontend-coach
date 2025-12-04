@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AuthService from "../services/authService";
 import { setAccessToken } from "../api/client";
+import { useToast } from "../hooks/useToast";
 
 interface User {
   id: string;
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const toast = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,6 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           const refreshed = await AuthService.refreshToken();
           if (!refreshed) {
             // Refresh failed, clear auth state
+            toast.error("Session expired. Please log in again.");
             setUser(null);
             setToken(null);
             setAccessToken(null);
@@ -53,6 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         } catch {
           // Any error, clear auth state
+          toast.error("Session error. Please log in again.");
           setUser(null);
           setToken(null);
           setAccessToken(null);
@@ -67,32 +71,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = async (email: string, password: string) => {
-    const data = await AuthService.login({ email, password });
-
-    setUser(data.user);
-    setToken(data.accessToken);
-    setAccessToken(data.accessToken);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    localStorage.setItem("accessToken", data.accessToken);
+    try {
+      const data = await AuthService.login({ email, password });
+      setUser(data.user);
+      setToken(data.accessToken);
+      setAccessToken(data.accessToken);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("accessToken", data.accessToken);
+    } catch (error) {
+      toast.error("Login failed. Please check your credentials.");
+      throw error;
+    }
   };
 
   const signup = async (name: string, email: string, password: string) => {
-    const data = await AuthService.register({ name, email, password });
-
-    setUser(data.user);
-    setToken(data.accessToken);
-    setAccessToken(data.accessToken);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    localStorage.setItem("accessToken", data.accessToken);
+    try {
+      const data = await AuthService.register({ name, email, password });
+      setUser(data.user);
+      setToken(data.accessToken);
+      setAccessToken(data.accessToken);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("accessToken", data.accessToken);
+    } catch (error) {
+      toast.error("Signup failed. Please try again.");
+      throw error;
+    }
   };
 
   const logout = async () => {
-    await AuthService.logout();
-    setUser(null);
-    setToken(null);
-    setAccessToken(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("accessToken");
+    try {
+      await AuthService.logout();
+    } catch (error) {
+      console.warn("Logout error:", error);
+    } finally {
+      setUser(null);
+      setToken(null);
+      setAccessToken(null);
+      localStorage.removeItem("user");
+      localStorage.removeItem("accessToken");
+      toast.success("You have been logged out successfully.");
+    }
   };
 
   return (

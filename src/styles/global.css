@@ -1,33 +1,31 @@
-/* Global Styles for Gen Z Aesthetic */
+/* Global Styles for Minimalistic Clean Aesthetic */
 
 :root {
-  /* Vibrant Color Palette */
-  --primary: #6c63ff;
-  --secondary: #ff6584;
-  --accent: #4dffea;
-  --dark: #121117;
-  --light: #ffffff;
-  --gray: #f0f0f5;
-  --success: #00ff9d;
-  --warning: #ffd166;
-  --error: #ff6b6b;
-  --sent: #bbbbbb;
-  --delivered: #4dffea;
-  --read: #6c63ff;
-
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, var(--primary), var(--secondary));
-  --gradient-secondary: linear-gradient(135deg, var(--accent), var(--primary));
+  /* Minimalistic Color Palette */
+  --primary: #4f46e5; /* Indigo-600 for primary actions */
+  --secondary: #64748b; /* Slate-500 for secondary elements */
+  --accent: #94a3b8; /* Slate-400 for accents */
+  --dark: #1e293b; /* Slate-800 for text */
+  --light: #ffffff; /* White background */
+  --gray-light: #f1f5f9; /* Light gray for subtle backgrounds */
+  --gray: #e2e8f0; /* Gray for borders */
+  --gray-dark: #94a3b8; /* Dark gray for muted text */
+  --success: #10b981; /* Emerald for success */
+  --warning: #f59e0b; /* Amber for warnings */
+  --error: #ef4444; /* Red for errors */
+  --sent: #94a3b8;
+  --delivered: #64748b;
+  --read: #4f46e5;
 
   /* Shadows */
-  --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 20px 25px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
   /* Radius */
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
   --radius-full: 50%;
 
   /* Spacing */
@@ -39,8 +37,10 @@
   --spacing-xxl: 48px;
 
   /* Typography */
-  --font-main: "Poppins", "Segoe UI", sans-serif;
-  --font-heading: "Montserrat", "Segoe UI", sans-serif;
+  --font-main: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  --font-heading: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont,
+    sans-serif;
 }
 
 * {
@@ -63,7 +63,7 @@ h4,
 h5,
 h6 {
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .container {
@@ -87,23 +87,22 @@ h6 {
 }
 
 .btn-primary {
-  background: var(--gradient-primary);
+  background: var(--primary);
   color: white;
 }
 
 .btn-secondary {
-  background: var(--gradient-secondary);
+  background: var(--secondary);
   color: white;
 }
 
 .btn-outline {
   background: transparent;
-  border: 2px solid var(--primary);
-  color: var(--primary);
+  border: 1px solid var(--gray);
+  color: var(--dark);
 }
 
 .btn:hover {
-  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
@@ -124,7 +123,7 @@ h6 {
 .input-field:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
 }
 
 .card {
@@ -137,29 +136,8 @@ h6 {
   overflow: hidden;
 }
 
-.card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
-  transition: 0.5s;
-}
-
 .card:hover {
-  transform: translateY(-5px);
   box-shadow: var(--shadow-lg);
-}
-
-.card:hover::before {
-  left: 100%;
 }
 
 .avatar {
@@ -190,105 +168,60 @@ h6 {
 }
 
 .badge-unread {
-  background: var(--secondary);
+  background: var(--primary);
   color: white;
 }
 
 .gradient-text {
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary);
 }
 
-/* Animations */
+/* Simplified Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
-@keyframes fadeInOut {
-  0% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes slideInLeft {
+@keyframes fadeOut {
   from {
-    opacity: 0;
-    transform: translateX(-20px);
+    opacity: 1;
   }
   to {
-    opacity: 1;
-    transform: translateX(0);
+    opacity: 0;
   }
 }
 
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes pulse {
+@keyframes ellipsis {
   0% {
-    transform: scale(1);
+    content: "";
+  }
+  25% {
+    content: ".";
   }
   50% {
-    transform: scale(1.05);
+    content: "..";
+  }
+  75% {
+    content: "...";
   }
   100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes bounce {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
+    content: "";
   }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.5s ease forwards;
+  animation: fadeIn 0.3s ease forwards;
 }
 
-.animate-fade-in-out {
-  animation: fadeInOut 3s ease-in-out forwards;
+.animate-fade-out {
+  animation: fadeOut 0.3s ease forwards;
 }
 
-.animate-slide-in-left {
-  animation: slideInLeft 0.3s ease forwards;
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.3s ease forwards;
-}
-
-.animate-pulse {
-  animation: pulse 2s infinite;
-}
-
-.animate-bounce {
-  animation: bounce 1s infinite;
+.typing-indicator::after {
+  content: "";
+  animation: ellipsis 1.5s infinite;
 }

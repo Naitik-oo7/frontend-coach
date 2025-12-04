@@ -40,12 +40,15 @@ class AuthService {
   }
 
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await apiPost("/api/v1/auth/login", credentials);
+    const response = await apiPost<AuthResponse>(
+      "/api/v1/auth/login",
+      credentials
+    );
     return response;
   }
 
   async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await apiPost("/api/v1/auth/register", data);
+    const response = await apiPost<AuthResponse>("/api/v1/auth/register", data);
     return response;
   }
 

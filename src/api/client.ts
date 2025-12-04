@@ -1,7 +1,68 @@
 // src/api/client.ts
+import axios from "axios";
+import type {
+  AxiosInstance,
+  AxiosRequestConfig,
+  InternalAxiosRequestConfig,
+} from "axios";
+
 const API_BASE = "http://localhost:3005";
 
 let accessToken: string | null = null;
+
+// Create axios instance with default configuration
+const apiClient: AxiosInstance = axios.create({
+  baseURL: API_BASE,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Request interceptor to add auth token
+apiClient.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle token refresh
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Handle 401 errors for token expiration
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // Check if it's specifically an access token expired error
+      if (error.response.data?.code === "ACCESS_TOKEN_EXPIRED") {
+        originalRequest._retry = true;
+        console.log("Access token expired, attempting refresh...");
+
+        const refreshed = await refreshToken();
+        if (refreshed) {
+          console.log("Token refreshed, retrying original request");
+          return apiClient(originalRequest);
+        }
+      } else {
+        // Any other 401 → hard fail
+        console.log("Unauthorized (not refreshable), logging out");
+        setAccessToken(null);
+        return Promise.reject(new Error("Unauthorized"));
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 // Track refresh attempts to prevent infinite loops
 let refreshAttempts = 0;
@@ -14,20 +75,18 @@ export function setAccessToken(token: string | null) {
 // Export refreshToken so it can be used elsewhere
 export async function refreshToken(): Promise<boolean> {
   try {
-    const res = await fetch(API_BASE + "/api/v1/auth/refresh", {
-      method: "POST",
-      credentials: "include",
-    });
-
-    if (!res.ok) {
-      console.log("Refresh token request failed with status:", res.status);
+    // Prevent infinite refresh loops
+    if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
+      console.error("Max refresh attempts reached, stopping refresh loop");
       return false;
     }
 
-    const data = await res.json();
+    refreshAttempts++;
 
-    if (data.accessToken) {
-      setAccessToken(data.accessToken);
+    const response = await apiClient.post("/api/v1/auth/refresh");
+
+    if (response.data.accessToken) {
+      setAccessToken(response.data.accessToken);
       refreshAttempts = 0; // Reset counter on successful refresh
       return true;
     }
@@ -39,105 +98,24 @@ export async function refreshToken(): Promise<boolean> {
   }
 }
 
-let refreshingPromise: Promise<boolean> | null = null;
-
-async function refreshAccessToken(): Promise<boolean> {
-  // If there's already a refresh in progress, return that promise
-  if (refreshingPromise) {
-    return refreshingPromise;
-  }
-
-  // Prevent infinite refresh loops
-  if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
-    console.error("Max refresh attempts reached, stopping refresh loop");
-    return false;
-  }
-
-  refreshAttempts++;
-
-  // Create a new refresh promise
-  refreshingPromise = refreshToken();
-
-  try {
-    const result = await refreshingPromise;
-    return result;
-  } finally {
-    // Clean up the promise reference
-    refreshingPromise = null;
-  }
+// Generic request function
+async function request<T>(config: AxiosRequestConfig): Promise<T> {
+  const response = await apiClient(config);
+  return response.data;
 }
 
-async function request(path: string, options: RequestInit = {}, retry = true) {
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...(options.headers || {}),
-  };
-
-  if (accessToken) {
-    (headers as Record<string, string>).Authorization = "Bearer " + accessToken;
-  }
-
-  const res = await fetch(API_BASE + path, {
-    ...options,
-    headers,
-    credentials: "include", // so refresh cookie is sent
-  });
-
-  // Handle 401 properly (refresh ONLY if access token expired)
-  if (res.status === 401 && retry) {
-    let errorBody = null;
-
-    try {
-      // clone() because response body can be read only once
-      errorBody = await res.clone().json();
-    } catch {
-      // ignore JSON parse errors
-    }
-
-    if (errorBody?.code === "ACCESS_TOKEN_EXPIRED") {
-      console.log("Access token expired, attempting refresh...");
-
-      const refreshed = await refreshAccessToken();
-      if (refreshed) {
-        console.log("Token refreshed, retrying original request");
-        return request(path, options, false);
-      }
-    }
-
-    // Any other 401 → hard fail
-    console.log("Unauthorized (not refreshable), logging out");
-    setAccessToken(null);
-    throw new Error("Unauthorized");
-  }
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "Request failed");
-  }
-
-  return res.json();
+export function apiGet<T>(path: string): Promise<T> {
+  return request<T>({ method: "GET", url: path });
 }
 
-export function apiGet(path: string) {
-  return request(path, { method: "GET" });
+export function apiPost<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>({ method: "POST", url: path, data: body });
 }
 
-export function apiPost(path: string, body?: unknown) {
-  return request(path, {
-    method: "POST",
-    body: body ? JSON.stringify(body) : undefined,
-  });
+export function apiPut<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>({ method: "PUT", url: path, data: body });
 }
 
-export function apiPut(path: string, body?: unknown) {
-  return request(path, {
-    method: "PUT",
-    body: body ? JSON.stringify(body) : undefined,
-  });
-}
-
-export function apiDelete(path: string) {
-  return request(path, {
-    method: "DELETE",
-  });
+export function apiDelete<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>({ method: "DELETE", url: path, data: body });
 }

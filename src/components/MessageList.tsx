@@ -94,120 +94,88 @@ const MessageList: React.FC<Props> = ({
     scrollToBottom();
   }, [messages]);
 
+  // Function to get status color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "read":
+        return "text-indigo-600";
+      case "delivered":
+        return "text-slate-500";
+      case "sent":
+        return "text-slate-400";
+      default:
+        return "text-slate-400";
+    }
+  };
+
+  // Function to get status icon
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "read":
+        return "✓✓";
+      case "delivered":
+        return "✓✓";
+      case "sent":
+        return "✓";
+      default:
+        return "✓";
+    }
+  };
+
   return (
     <div
       id="messages"
-      ref={messagesContainerRef} // Add ref to container
-      style={{
-        flex: 1,
-        overflowY: "auto",
-        padding: "var(--spacing-md)",
-        marginBottom: "var(--spacing-sm)",
-        background: "linear-gradient(to bottom, #f0f0f5, #e6e6f0)",
-      }}
+      ref={messagesContainerRef}
+      className="flex-1 overflow-y-auto p-4 mb-2 bg-white"
     >
       {messages.length === 0 ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100%",
-            textAlign: "center",
-            color: "var(--gray)",
-          }}
-        >
-          <div
-            style={{
-              width: "60px",
-              height: "60px",
-              borderRadius: "var(--radius-full)",
-              background: "var(--gradient-primary)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: "var(--spacing-md)",
-            }}
-          >
+        <div className="flex flex-col items-center justify-center h-full text-center text-slate-500">
+          <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="30"
-              height="30"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
-              fill="white"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+              <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z" />
             </svg>
           </div>
-          <h3>No messages yet</h3>
-          <p>Be the first to start the conversation!</p>
+          <h3 className="text-lg font-medium">No messages yet</h3>
+          <p className="text-sm mt-1">
+            Be the first to start the conversation!
+          </p>
         </div>
       ) : (
         messages.map((m, index) => (
           <div
             key={m.id}
-            data-message-id={m.id} // Add data attribute for identification
+            data-message-id={m.id}
             className="animate-fade-in"
             style={{
-              display: "flex",
-              justifyContent:
-                m.senderId === currentUserId ? "flex-end" : "flex-start",
-              marginBottom: "var(--spacing-md)",
               animationDelay: `${index * 0.1}s`,
             }}
           >
             <div
-              style={{
-                maxWidth: "70%",
-                padding: "var(--spacing-sm) var(--spacing-md)",
-                borderRadius:
-                  m.senderId === currentUserId
-                    ? "var(--radius-lg) var(--radius-sm) var(--radius-lg) var(--radius-lg)"
-                    : "var(--radius-sm) var(--radius-lg) var(--radius-lg) var(--radius-lg)",
-                background:
-                  m.senderId === currentUserId
-                    ? "var(--gradient-primary)"
-                    : "white",
-                color: m.senderId === currentUserId ? "white" : "var(--dark)",
-                boxShadow: "var(--shadow-sm)",
-                position: "relative",
-              }}
+              className={`w-fit max-w-[70%] p-3 rounded-lg shadow-sm relative ${
+                m.senderId === currentUserId
+                  ? "ml-auto bg-indigo-600 text-white rounded-tr-sm rounded-tl-xl rounded-br-xl rounded-bl-xl"
+                  : "mr-auto bg-slate-100 text-slate-800 rounded-tr-xl rounded-tl-sm rounded-br-xl rounded-bl-xl border border-slate-200"
+              }`}
             >
-              <div style={{ fontSize: "0.9rem" }}>{m.text}</div>
-              <div
-                style={{
-                  fontSize: "0.7rem",
-                  marginTop: "var(--spacing-xs)",
-                  opacity: 0.8,
-                  textAlign: "right",
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
+              <div className="text-sm">{m.text}</div>
+              <div className="text-xs mt-1 opacity-80 text-right flex justify-end items-center gap-1">
                 {new Date(m.createdAt).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
                 {m.senderId === currentUserId && (
-                  <span
-                    style={{
-                      fontSize: "0.8rem",
-                      color:
-                        m.status === "read"
-                          ? "var(--read)"
-                          : m.status === "delivered"
-                          ? "var(--delivered)"
-                          : "var(--sent)",
-                    }}
-                  >
-                    {m.status === "read"
-                      ? "✓✓"
-                      : m.status === "delivered"
-                      ? "✓✓"
-                      : "✓"}
+                  <span className={getStatusColor(m.status)}>
+                    {getStatusIcon(m.status)}
                   </span>
                 )}
               </div>
@@ -216,25 +184,9 @@ const MessageList: React.FC<Props> = ({
         ))
       )}
       {typingUsers.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "var(--spacing-sm)",
-            padding: "var(--spacing-sm) var(--spacing-md)",
-            fontStyle: "italic",
-            color: "var(--gray)",
-          }}
-        >
-          <div className="animate-pulse">
-            {typingUsers.join(", ")} is typing
-          </div>
-          <div
-            className="animate-fade-in-out"
-            style={{ color: "var(--primary)" }}
-          >
-            ...
-          </div>
+        <div className="flex items-center gap-2 p-2 text-slate-500 text-sm">
+          <div>{typingUsers.join(", ")} is typing</div>
+          <div className="typing-indicator text-slate-400"></div>
         </div>
       )}
       <div ref={messagesEndRef} />

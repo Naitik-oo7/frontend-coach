@@ -309,17 +309,6 @@ const AdminPermissionManager: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Individual Permission Assignment (kept for backward compatibility) */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mt-6 border border-slate-200">
-        <h3 className="text-xl font-medium mb-2 text-slate-800">
-          Assign Individual Permission
-        </h3>
-        <p className="text-slate-600 mb-4">
-          Use this section to assign a single permission to a role
-        </p>
-        {/* ... existing form code ... */}
-      </div>
     </div>
   );
 };

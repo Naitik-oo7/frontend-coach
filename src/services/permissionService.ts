@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPost, apiPut } from "../api/client";
+import { apiGet, apiPost, apiPut } from "../api/client";
 
 // Types
 export interface Permission {
@@ -52,28 +52,6 @@ export async function getRolePermissions(roleName: string): Promise<string[]> {
 }
 
 /**
- * Assign a permission to a role
- */
-export async function assignPermissionToRole(
-  roleName: string,
-  permissionName: string
-) {
-  try {
-    const response = await apiPost("/api/v1/role-permissions/assign", {
-      roleName,
-      permissionName,
-    });
-    return response;
-  } catch (error) {
-    console.error(
-      `Error assigning permission ${permissionName} to role ${roleName}:`,
-      error
-    );
-    throw error;
-  }
-}
-
-/**
  * Assign multiple permissions to a role
  */
 export async function assignPermissionsToRole(
@@ -88,28 +66,6 @@ export async function assignPermissionsToRole(
     return response;
   } catch (error) {
     console.error(`Error assigning permissions to role ${roleName}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Remove a permission from a role
- */
-export async function removePermissionFromRole(
-  roleName: string,
-  permissionName: string
-) {
-  try {
-    const response = await apiDelete("/api/v1/role-permissions/remove", {
-      roleName,
-      permissionName,
-    });
-    return response;
-  } catch (error) {
-    console.error(
-      `Error removing permission ${permissionName} from role ${roleName}:`,
-      error
-    );
     throw error;
   }
 }

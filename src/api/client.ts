@@ -6,7 +6,7 @@ import type {
   InternalAxiosRequestConfig,
 } from "axios";
 
-const API_BASE = "http://localhost:3005";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 let accessToken: string | null = null;
 

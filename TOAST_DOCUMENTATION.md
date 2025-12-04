@@ -99,7 +99,3 @@ The following components have been updated to use toast notifications instead of
 ## Styling
 
 The toast notifications use the default styling from `react-hot-toast` which fits well with the application's design. The notifications appear at the top-right of the screen and automatically disappear after 5 seconds.
-
-## Testing
-
-A test component `TestToast.tsx` has been created and added to the `TestPage.tsx` to demonstrate all toast types. You can access this by navigating to the test page in the application.

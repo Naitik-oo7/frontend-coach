@@ -9,6 +9,7 @@ import type { Message } from "../components/MessageList";
 import ConversationList from "../components/ConversationList";
 import MessageList from "../components/MessageList";
 import { useToast } from "../hooks/useToast";
+import FcmNotificationManager from "../components/FcmNotificationManager";
 
 // Define User interface
 interface User {
@@ -50,9 +51,7 @@ const ChatPage: React.FC = () => {
   const [showNewConversationForm, setShowNewConversationForm] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
-  const socketRef = useRef<Socket | null>(null);
-
-  // connect socket
+  const socketRef = useRef<Socket | null>(null); // connect socket
   useEffect(() => {
     if (!accessToken) return;
 
@@ -331,6 +330,7 @@ const ChatPage: React.FC = () => {
 
   return (
     <div className="p-4">
+      <FcmNotificationManager />
       <div className="flex flex-col h-[calc(100vh-2rem)] rounded-lg overflow-hidden shadow-md border border-slate-200">
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-white text-slate-800">
@@ -361,7 +361,7 @@ const ChatPage: React.FC = () => {
             >
               Logout
             </button>
-          </div>
+          </div>{" "}
         </div>
 
         {/* Main Content */}

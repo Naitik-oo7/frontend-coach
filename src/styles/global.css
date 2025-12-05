@@ -43,6 +43,25 @@
     sans-serif;
 }
 
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  /* Adjust message bubbles for smaller screens */
+  .message-bubble {
+    max-width: 85% !important;
+  }
+
+  /* Reduce padding on mobile */
+  .p-mobile-reduced {
+    padding: 0.5rem !important;
+  }
+
+  /* Increase touch targets on mobile */
+  .touch-target {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -224,4 +243,23 @@ h6 {
 .typing-indicator::after {
   content: "";
   animation: ellipsis 1.5s infinite;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  /* Adjust message bubbles for smaller screens */
+  .message-bubble {
+    max-width: 85% !important;
+  }
+
+  /* Reduce padding on mobile */
+  .p-mobile-reduced {
+    padding: 0.5rem !important;
+  }
+
+  /* Increase touch targets on mobile */
+  .touch-target {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
 }

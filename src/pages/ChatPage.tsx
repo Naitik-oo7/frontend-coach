@@ -331,7 +331,7 @@ const ChatPage: React.FC = () => {
   return (
     <div className="p-4">
       <FcmNotificationManager />
-      <div className="flex flex-col h-[calc(100vh-2rem)] rounded-lg overflow-hidden shadow-md border border-slate-200">
+      <div className="flex flex-col lg:h-[calc(100vh-2rem)] rounded-lg overflow-hidden shadow-md border border-slate-200">
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-white text-slate-800">
           <div className="flex items-center gap-4">
@@ -365,9 +365,15 @@ const ChatPage: React.FC = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
           {/* Sidebar */}
-          <div className="w-1/3 border-r border-slate-200 flex flex-col bg-white">
+          <div
+            className={`lg:w-1/3 border-r border-slate-200 flex flex-col bg-white transition-all duration-300 ${
+              activeId && window.innerWidth < 1024
+                ? "hidden absolute inset-0 z-10 h-[calc(100vh-2rem)]"
+                : "w-full"
+            } lg:block`}
+          >
             <div className="flex justify-between items-center p-4 border-b border-slate-200">
               <h3 className="m-0 font-medium text-slate-800">Conversations</h3>
               <div className="flex gap-1">
@@ -482,7 +488,11 @@ const ChatPage: React.FC = () => {
           </div>
 
           {/* Chat Area */}
-          <div className="w-2/3 flex flex-col">
+          <div
+            className={`flex flex-col ${
+              activeId ? "w-full lg:w-2/3" : "w-full lg:w-2/3"
+            }`}
+          >
             {activeId ? (
               <>
                 <MessageList
@@ -496,6 +506,26 @@ const ChatPage: React.FC = () => {
                   onTyping={sendTypingIndicator}
                   onStopTyping={sendStopTypingIndicator}
                 />
+                {/* Back button for mobile */}
+                <button
+                  className="lg:hidden fixed bottom-4 right-4 w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg z-20"
+                  onClick={() => setActiveId(null)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                  </svg>
+                </button>
               </>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-white">

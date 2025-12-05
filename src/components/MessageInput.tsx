@@ -60,10 +60,10 @@ const MessageInput: React.FC<Props> = ({ onSend, onTyping, onStopTyping }) => {
   }, [onStopTyping]);
 
   return (
-    <div className="p-4 border-t border-slate-200 bg-white">
+    <div className="p-2 sm:p-4 border-t border-slate-200 bg-white">
       <div className="flex gap-2 items-end">
         <textarea
-          className="flex-1 px-4 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 resize-none min-h-[40px] max-h-[120px] font-sans"
+          className="flex-1 px-3 py-2 sm:px-4 sm:py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 resize-none min-h-[40px] max-h-[120px] font-sans text-sm sm:text-base"
           placeholder="Type a message..."
           value={text}
           onChange={handleChange}
@@ -75,7 +75,7 @@ const MessageInput: React.FC<Props> = ({ onSend, onTyping, onStopTyping }) => {
           }}
         />
         <button
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg min-w-[40px] h-[40px] flex items-center justify-center hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+          className="px-3 py-2 sm:px-4 sm:py-2 bg-indigo-600 text-white rounded-lg min-w-[40px] h-[40px] flex items-center justify-center hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
           onClick={handleSend}
           disabled={!text.trim()}
         >
@@ -95,7 +95,7 @@ const MessageInput: React.FC<Props> = ({ onSend, onTyping, onStopTyping }) => {
           </svg>
         </button>
       </div>
-      <div className="text-xs text-slate-500 mt-1 text-right">
+      <div className="text-xs text-slate-500 mt-1 text-right hidden sm:block">
         Press Enter to send, Shift+Enter for new line
       </div>
     </div>

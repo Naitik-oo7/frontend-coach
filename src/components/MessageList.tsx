@@ -126,7 +126,7 @@ const MessageList: React.FC<Props> = ({
     <div
       id="messages"
       ref={messagesContainerRef}
-      className="flex-1 overflow-y-auto p-4 mb-2 bg-white"
+      className="flex-1 overflow-y-auto p-2 sm:p-4 mb-2 bg-white"
     >
       {messages.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-center text-slate-500">
@@ -161,10 +161,10 @@ const MessageList: React.FC<Props> = ({
             }}
           >
             <div
-              className={`w-fit max-w-[70%] p-3 rounded-lg shadow-sm relative ${
+              className={`w-fit max-w-[85%] sm:max-w-[70%] p-2 sm:p-3 rounded-lg shadow-sm relative message-bubble ${
                 m.senderId === currentUserId
-                  ? "ml-auto bg-indigo-600 text-white rounded-tr-sm rounded-tl-xl rounded-br-xl rounded-bl-xl"
-                  : "mr-auto bg-slate-100 text-slate-800 rounded-tr-xl rounded-tl-sm rounded-br-xl rounded-bl-xl border border-slate-200"
+                  ? "ml-auto bg-indigo-600 text-white rounded-tr-none rounded-tl-xl rounded-br-xl rounded-bl-xl"
+                  : "mr-auto bg-slate-100 text-slate-800 rounded-tr-xl rounded-tl-none rounded-br-xl rounded-bl-xl border border-slate-200"
               }`}
             >
               <div className="text-sm">{m.text}</div>

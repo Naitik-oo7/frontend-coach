@@ -9,7 +9,7 @@ import type { Message } from "../components/MessageList";
 import ConversationList from "../components/ConversationList";
 import MessageList from "../components/MessageList";
 import { useToast } from "../hooks/useToast";
-import FcmNotificationManager from "../components/FcmNotificationManager";
+import { useFcm } from "../hooks/useFcm";
 
 // Define User interface
 interface User {
@@ -43,6 +43,8 @@ interface CreateConversationResponse {
 const ChatPage: React.FC = () => {
   const { user, accessToken, logout } = useAuth();
   const toast = useToast();
+  const { fcmToken, isSupported, requestPermission, saveToken, removeToken } =
+    useFcm();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -317,11 +319,36 @@ const ChatPage: React.FC = () => {
     });
   };
 
+  // Add notification toggle function
+  const toggleNotifications = async () => {
+    if (!isSupported) return;
+
+    try {
+      if (fcmToken) {
+        // Disable notifications
+        await removeToken(fcmToken);
+        toast.success("Notifications disabled");
+      } else {
+        // Enable notifications
+        const token = await requestPermission();
+        await saveToken(token);
+        toast.success("Notifications enabled");
+      }
+    } catch (error) {
+      console.error("Failed to toggle notifications:", error);
+      if (
+        error instanceof Error &&
+        !error.message.includes("too many requests")
+      ) {
+        toast.error("Failed to toggle notifications");
+      }
+    }
+  };
+
   if (!user) return null;
 
   return (
     <div className="p-4">
-      <FcmNotificationManager />
       <div className="flex flex-col lg:h-[calc(100vh-2rem)] rounded-lg overflow-hidden shadow-md border border-slate-200">
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-white text-slate-800">
@@ -336,7 +363,37 @@ const ChatPage: React.FC = () => {
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {/* Bell Icon for Notifications */}
+            {isSupported && (
+              <button
+                onClick={toggleNotifications}
+                className="p-2 rounded-full hover:bg-slate-100 transition-colors relative"
+                aria-label={
+                  fcmToken ? "Disable notifications" : "Enable notifications"
+                }
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke={fcmToken ? "currentColor" : "currentColor"}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={fcmToken ? "text-blue-600" : "text-slate-500"}
+                >
+                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                {fcmToken && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full"></span>
+                )}
+              </button>
+            )}
+
             {/* Show Admin Panel link only for admin users */}
             {user.role === "admin" && (
               <a

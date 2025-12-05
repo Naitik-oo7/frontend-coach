@@ -39,34 +39,35 @@ export function useFcm(): UseFcmReturn {
       setMessaging(messaging);
       setIsSupported(true);
 
-      // Handle incoming messages when the app is in the foreground
+      // Handle foreground messages
       onMessage(messaging, (payload) => {
-        console.log("Message received in foreground: ", payload);
-        // Show notification even in foreground to maintain consistency
-        if (Notification.permission === "granted") {
-          // Create a notification using the same data as background notifications
-          const notificationTitle =
-            payload.notification?.title || "New Message";
-          const notificationOptions = {
-            body: payload.notification?.body || "",
-            icon: "/favicon.ico",
-            data: payload.data,
-          };
+        console.log("Message received in foreground:", payload);
+        const notificationTitle =
+          payload.notification?.title || "New notification";
+        const notificationOptions = {
+          body: payload.notification?.body || "",
+          icon: "/favicon.ico",
+          data: payload.data,
+        };
 
-          // Use the service worker to show the notification
-          if (
-            "serviceWorker" in navigator &&
-            navigator.serviceWorker.controller
-          ) {
-            navigator.serviceWorker.controller.postMessage({
-              type: "SHOW_NOTIFICATION",
-              title: notificationTitle,
-              options: notificationOptions,
-            });
-          } else {
-            // Fallback to direct notification if service worker is not available
-            new Notification(notificationTitle, notificationOptions);
-          }
+        // Check if browser supports service workers
+        if ("serviceWorker" in navigator && "PushManager" in window) {
+          // Show notification via service worker if available
+          navigator.serviceWorker.ready.then((registration) => {
+            if (registration.active) {
+              registration.active.postMessage({
+                type: "SHOW_NOTIFICATION",
+                title: notificationTitle,
+                options: notificationOptions,
+              });
+            } else {
+              // Fallback to direct notification if service worker is not available
+              new Notification(notificationTitle, notificationOptions);
+            }
+          });
+        } else {
+          // Fallback to direct notification if service worker is not available
+          new Notification(notificationTitle, notificationOptions);
         }
       });
     } catch (error) {

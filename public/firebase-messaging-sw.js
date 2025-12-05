@@ -1,21 +1,21 @@
 // public/firebase-messaging-sw.js
 importScripts(
-  "https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"
+  "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"
 );
 importScripts(
-  "https://www.gstatic.com/firebasejs/9.1.3/firebase-messaging-compat.js"
+  "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"
 );
 
 // Firebase configuration
 // Note: These values need to be hardcoded in the service worker as it doesn't have access to environment variables
 const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY,
-  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.VITE_FIREBASE_APP_ID,
-  measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID,
+  apiKey: "AIzaSyDeeNyUYjpJiwvtz_cJx2WxD2dag7lDbcM",
+  authDomain: "practice-backend-60a0c.firebaseapp.com",
+  projectId: "practice-backend-60a0c",
+  storageBucket: "practice-backend-60a0c.firebasestorage.app",
+  messagingSenderId: "351575397068",
+  appId: "1:351575397068:web:3891c91fb9bf4f942ea869",
+  measurementId: "G-S9EP0TH6FH",
 };
 
 // Initialize Firebase

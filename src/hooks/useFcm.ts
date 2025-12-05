@@ -5,8 +5,6 @@ import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import type { Messaging } from "firebase/messaging";
 
-// Firebase configuration
-// Replace with your Firebase project configuration
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string,
@@ -32,43 +30,15 @@ export function useFcm(): UseFcmReturn {
   const [messaging, setMessaging] = useState<Messaging | null>(null);
 
   useEffect(() => {
-    // Initialize Firebase
     try {
       const app = initializeApp(firebaseConfig);
       const messaging = getMessaging(app);
       setMessaging(messaging);
       setIsSupported(true);
 
-      // Handle foreground messages
+      // FOREGROUND HANDLER — LOG ONLY
       onMessage(messaging, (payload) => {
         console.log("Message received in foreground:", payload);
-        const notificationTitle =
-          payload.notification?.title || "New notification";
-        const notificationOptions = {
-          body: payload.notification?.body || "",
-          icon: "/favicon.ico",
-          data: payload.data,
-        };
-
-        // Check if browser supports service workers
-        if ("serviceWorker" in navigator && "PushManager" in window) {
-          // Show notification via service worker if available
-          navigator.serviceWorker.ready.then((registration) => {
-            if (registration.active) {
-              registration.active.postMessage({
-                type: "SHOW_NOTIFICATION",
-                title: notificationTitle,
-                options: notificationOptions,
-              });
-            } else {
-              // Fallback to direct notification if service worker is not available
-              new Notification(notificationTitle, notificationOptions);
-            }
-          });
-        } else {
-          // Fallback to direct notification if service worker is not available
-          new Notification(notificationTitle, notificationOptions);
-        }
       });
     } catch (error) {
       console.error("Failed to initialize Firebase:", error);
@@ -82,22 +52,16 @@ export function useFcm(): UseFcmReturn {
     }
 
     try {
-      // Request permission to send notifications
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
         throw new Error("Notification permission denied");
       }
 
-      // Get FCM token
       const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY as string;
-      if (!vapidKey) {
-        throw new Error("VAPID key not configured");
-      }
+      if (!vapidKey) throw new Error("VAPID key not configured");
 
       const token = await getToken(messaging, { vapidKey });
-      if (!token) {
-        throw new Error("Failed to get FCM token");
-      }
+      if (!token) throw new Error("Failed to get FCM token");
 
       return token;
     } catch (error) {
@@ -112,14 +76,11 @@ export function useFcm(): UseFcmReturn {
       await FcmService.saveFcmToken(token);
       setFcmToken(token);
     } catch (error) {
-      // Handle rate limiting
       if (
         error instanceof Error &&
-        error.message &&
         error.message.includes("too many requests")
       ) {
-        console.warn("Rate limit exceeded when saving FCM token, skipping...");
-        // Don't throw the error to prevent cascading failures
+        console.warn("Rate limit exceeded saving FCM token");
         return;
       }
       console.error("Failed to save FCM token:", error);
@@ -132,16 +93,11 @@ export function useFcm(): UseFcmReturn {
       await FcmService.removeFcmToken(token);
       setFcmToken(null);
     } catch (error) {
-      // Handle rate limiting
       if (
         error instanceof Error &&
-        error.message &&
         error.message.includes("too many requests")
       ) {
-        console.warn(
-          "Rate limit exceeded when removing FCM token, skipping..."
-        );
-        // Don't throw the error to prevent cascading failures
+        console.warn("Rate limit exceeded removing FCM token");
         return;
       }
       console.error("Failed to remove FCM token:", error);

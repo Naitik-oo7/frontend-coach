@@ -55,7 +55,7 @@ const ChatPage: React.FC = () => {
   useEffect(() => {
     if (!accessToken) return;
 
-    const socket = io(import.meta.env.VITE_API_URL, {
+    const socket = io(import.meta.env.VITE_API_BASE_URL, {
       auth: { token: accessToken },
     });
 

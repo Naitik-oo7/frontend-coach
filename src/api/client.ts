@@ -51,6 +51,11 @@ apiClient.interceptors.response.use(
         if (refreshed) {
           console.log("Token refreshed, retrying original request");
           return apiClient(originalRequest);
+        } else {
+          // Refresh failed, redirect to login
+          console.log("Token refresh failed, redirecting to login");
+          setAccessToken(null);
+          window.location.href = "/login";
         }
       } else {
         // Any other 401 → hard fail

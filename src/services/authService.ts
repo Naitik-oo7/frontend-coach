@@ -1,5 +1,6 @@
 // src/services/authService.ts
 import { apiPost, refreshToken as apiRefreshToken } from "../api/client";
+import { isTokenExpired } from "../utils/token";
 
 interface LoginCredentials {
   email: string;
@@ -62,10 +63,24 @@ class AuthService {
   }
 
   /**
+   * Checks if the current token is expired
+   * @param token - Access token to check
+   * @returns boolean indicating if token is expired
+   */
+  isTokenExpired(token: string): boolean {
+    return isTokenExpired(token);
+  }
+
+  /**
    * Refresh the access token using the refresh token.
    * Ensures only one refresh request is made at a time.
    */
-  async refreshToken(): Promise<boolean> {
+  async refreshToken(currentToken?: string): Promise<boolean> {
+    // If we have a current token and it's not expired, don't refresh
+    if (currentToken && !this.isTokenExpired(currentToken)) {
+      return true;
+    }
+
     const now = Date.now();
 
     // Check if we're still in cooldown period

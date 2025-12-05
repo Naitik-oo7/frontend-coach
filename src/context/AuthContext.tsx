@@ -43,16 +43,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setToken(storedToken);
           setAccessToken(storedToken);
 
-          // Validate token by attempting to refresh it
-          const refreshed = await AuthService.refreshToken();
-          if (!refreshed) {
-            // Refresh failed, clear auth state
-            toast.error("Session expired. Please log in again.");
-            setUser(null);
-            setToken(null);
-            setAccessToken(null);
-            localStorage.removeItem("user");
-            localStorage.removeItem("accessToken");
+          // Only attempt refresh if the token is actually expired
+          if (AuthService.isTokenExpired(storedToken)) {
+            const refreshed = await AuthService.refreshToken(storedToken);
+            if (!refreshed) {
+              // Refresh failed, clear auth state
+              toast.error("Session expired. Please log in again.");
+              setUser(null);
+              setToken(null);
+              setAccessToken(null);
+              localStorage.removeItem("user");
+              localStorage.removeItem("accessToken");
+            }
           }
         } catch {
           // Any error, clear auth state

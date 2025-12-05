@@ -8,12 +8,10 @@ import { Toaster } from "react-hot-toast";
 import "./styles/tailwind.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-        <Toaster />
-      </AuthProvider>
-    </BrowserRouter>
-  </React.StrictMode>
+  <BrowserRouter>
+    <AuthProvider>
+      <App />
+      <Toaster />
+    </AuthProvider>
+  </BrowserRouter>
 );

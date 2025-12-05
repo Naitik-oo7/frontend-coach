@@ -47,7 +47,6 @@ const ChatPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newConversationUserId, setNewConversationUserId] = useState("");
   const [showNewConversationForm, setShowNewConversationForm] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
@@ -247,8 +246,7 @@ const ChatPage: React.FC = () => {
       handleSelectConversation(conversationId);
       // Hide the form
       setShowNewConversationForm(false);
-      setNewConversationUserId("");
-
+      // Removed manual user ID entry functionality
       toast.success("Conversation created successfully!");
     } catch (error) {
       console.error("Failed to create conversation:", error);
@@ -317,13 +315,6 @@ const ChatPage: React.FC = () => {
       conversationId: activeId,
       userId: user.id,
     });
-  };
-
-  const handleCreateConversation = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newConversationUserId.trim()) {
-      createConversation(newConversationUserId.trim());
-    }
   };
 
   if (!user) return null;
@@ -416,22 +407,9 @@ const ChatPage: React.FC = () => {
                 <h4 className="mt-0 text-base font-medium text-slate-800">
                   Start New Conversation
                 </h4>
-                <form onSubmit={handleCreateConversation}>
-                  <input
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 mb-2"
-                    type="text"
-                    placeholder="Enter user ID"
-                    value={newConversationUserId}
-                    onChange={(e) => setNewConversationUserId(e.target.value)}
-                  />
-                  <button
-                    className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition"
-                    type="submit"
-                  >
-                    Start Conversation
-                  </button>
-                </form>
-
+                <p className="text-slate-600 mb-4">
+                  Select a user from the list below to start a conversation.
+                </p>
                 {users.length > 0 && (
                   <div className="mt-4">
                     <h5 className="mb-2">Select from all users:</h5>
@@ -442,7 +420,6 @@ const ChatPage: React.FC = () => {
                           <div
                             key={u.id}
                             onClick={() => {
-                              setNewConversationUserId(u.id);
                               createConversation(u.id);
                             }}
                             className="p-2 cursor-pointer bg-slate-50 rounded-md mb-1 transition hover:bg-slate-100"

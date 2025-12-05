@@ -30,20 +30,25 @@ export function useFcm(): UseFcmReturn {
   const [messaging, setMessaging] = useState<Messaging | null>(null);
 
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
     try {
       const app = initializeApp(firebaseConfig);
       const messaging = getMessaging(app);
       setMessaging(messaging);
       setIsSupported(true);
 
-      // FOREGROUND HANDLER — LOG ONLY
-      onMessage(messaging, (payload) => {
+      unsubscribe = onMessage(messaging, (payload) => {
         console.log("Message received in foreground:", payload);
       });
-    } catch (error) {
-      console.error("Failed to initialize Firebase:", error);
+    } catch (err) {
+      console.error("Failed to initialize Firebase:", err);
       setIsSupported(false);
     }
+
+    return () => {
+      if (unsubscribe) unsubscribe(); // prevents duplicate listeners
+    };
   }, []);
 
   const requestPermission = async (): Promise<string> => {

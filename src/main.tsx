@@ -14,3 +14,11 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     </AuthProvider>
   </BrowserRouter>
 );
+
+// ✅ Register FCM service worker globally (after render)
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .register("/firebase-messaging-sw.js")
+    .then(() => console.log("Service Worker registered for FCM"))
+    .catch((err) => console.error("SW registration failed:", err));
+}
